@@ -4,7 +4,8 @@
 #include "uthread.h"
 
 #define MAX_THREADS 16
-#define STACK_SIZE 4096
+/* xv6 user heap is small; 3 threads * 4096 blew allocuvm — 2048 is enough here */
+#define STACK_SIZE 2048
 
 struct context {
   uint edi;
