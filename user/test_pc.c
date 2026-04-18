@@ -10,11 +10,11 @@ static umutex_t mu;
 
 static void producer(void *arg){
   int id = (int)arg;
-  for(int i=0;i<100;i++){
+  for(int i = 0; i < 100; i++){
     mutex_lock(&mu);
     if(count < N){
-      buf[tail] = id*1000 + i;
-      tail = (tail+1)%N;
+      buf[tail] = id * 1000 + i;
+      tail = (tail + 1) % N;
       count++;
     }
     mutex_unlock(&mu);
@@ -29,10 +29,11 @@ static void consumer(void *arg){
     mutex_lock(&mu);
     if(count > 0){
       int x = buf[head];
-      head = (head+1)%N;
+      head = (head + 1) % N;
       count--;
       got++;
-      if(got % 50 == 0) printf(1, "consumer got %d (last=%d)\n", got, x);
+      if(got % 50 == 0)
+        printf(1, "consumer got %d (last=%d)\n", got, x);
     }
     mutex_unlock(&mu);
     thread_yield();
@@ -43,11 +44,18 @@ int main(void){
   thread_init();
   mutex_init(&mu);
 
-  tid_t p1 = thread_create(producer, (void*)1);
-  tid_t p2 = thread_create(producer, (void*)2);
-  tid_t c1 = thread_create(consumer, 0);
-  (void)p1; (void)p2; (void)c1;
+  int p1 = thread_create(producer, (void*)1);
+  int p2 = thread_create(producer, (void*)2);
+  int c1 = thread_create(consumer, 0);
+  if(p1 < 0 || p2 < 0 || c1 < 0){
+    printf(1, "test_pc: thread_create failed\n");
+    exit();
+  }
 
-  printf(1, "test_pc: done (skeleton)\n");
+  thread_join(p1);
+  thread_join(p2);
+  thread_join(c1);
+
+  printf(1, "test_pc: done\n");
   exit();
 }
