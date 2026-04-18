@@ -1,7 +1,8 @@
 # void uswtch(struct context **old, struct context *new);
 #
-# Save callee-saved registers and return address into *old,
-# then load from new and jump (ret) to new's eip.
+# struct context { edi, esi, ebx, ebp, eip, esp }
+# Save callee regs, return address (eip), and stack pointer (esp), then
+# load the next context and switch stacks before ret.
 
 .globl uswtch
 uswtch:
@@ -16,6 +17,7 @@ uswtch:
   movl %ebp, 12(%ecx)
   movl (%esp), %edi
   movl %edi, 16(%ecx)
+  movl %esp, 20(%ecx)
 
   movl %edx, (%eax)
 
@@ -24,6 +26,5 @@ uswtch:
   movl 4(%ecx), %esi
   movl 8(%ecx), %ebx
   movl 12(%ecx), %ebp
-  movl 16(%ecx), %eax
-  movl %eax, (%esp)
+  movl 20(%ecx), %esp
   ret

@@ -12,6 +12,7 @@ struct context {
   uint ebx;
   uint ebp;
   uint eip;
+  uint esp; /* stack pointer to use before ret (return addr at *esp) */
 };
 
 enum { FREE, RUNNABLE, RUNNING, ZOMBIE };
@@ -59,13 +60,18 @@ int thread_create(void (*fn)(void*), void *arg)
   if(stk == 0)
     return -1;
 
+  /*
+   * Layout (uint indices): 0-3 edi..ebp, 4 eip, 5 esp (for uswtch), 6 fn, 7 arg.
+   * First time we switch in: esp = &base[4], ret pops thread_stub, then esp
+   * points at base[5]; thread_stub uses sp[1]=fn, sp[2]=arg (see thread_stub).
+   */
   uint *base = (uint*)(stk + STACK_SIZE - 8 * sizeof(uint));
   base[0] = 0;
   base[1] = 0;
   base[2] = 0;
   base[3] = 0;
   base[4] = (uint)thread_stub;
-  base[5] = 0xffffffff;
+  base[5] = (uint)(base + 4); /* saved esp: points at eip word for ret */
   base[6] = (uint)fn;
   base[7] = (uint)arg;
 
@@ -80,6 +86,7 @@ static void thread_stub(void)
 {
   uint *sp;
   asm volatile("movl %%esp, %0" : "=r"(sp));
+  /* sp[0] is saved-esp slot; sp[1]=fn sp[2]=arg */
   void (*fn)(void*) = (void(*)(void*))sp[1];
   void *arg = (void*)sp[2];
 
