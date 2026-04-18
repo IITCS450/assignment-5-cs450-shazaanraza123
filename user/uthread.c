@@ -4,8 +4,13 @@
 #include "uthread.h"
 
 #define MAX_THREADS 16
-/* xv6 user heap is small; 3 threads * 4096 blew allocuvm — 2048 is enough here */
 #define STACK_SIZE 2048
+
+/*
+ * Per-thread stacks live in .bss, not the heap: xv6 malloc() grows the heap in
+ * large chunks (see umalloc.c morecore), so several mallocs hit allocuvm OOM.
+ */
+static char stack_pool[MAX_THREADS][STACK_SIZE];
 
 struct context {
   uint edi;
@@ -57,9 +62,7 @@ int thread_create(void (*fn)(void*), void *arg)
   if(i == MAX_THREADS)
     return -1;
 
-  char *stk = malloc(STACK_SIZE);
-  if(stk == 0)
-    return -1;
+  char *stk = (char*)stack_pool[i];
 
   /*
    * Layout (uint indices): 0-3 edi..ebp, 4 eip, 5 esp (for uswtch), 6 fn, 7 arg.
@@ -140,9 +143,6 @@ int thread_join(int tid)
 
   while(threads[tid].state != ZOMBIE)
     thread_yield();
-
-  if(threads[tid].stack)
-    free(threads[tid].stack);
 
   threads[tid].stack = 0;
   threads[tid].ctx = 0;
