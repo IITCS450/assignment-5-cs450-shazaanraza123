@@ -4,7 +4,7 @@
 #include "uthread.h"
 
 #define MAX_THREADS 16
-#define STACK_SIZE 1024
+#define STACK_SIZE 2048
 
 /*
  * Child thread stacks (slots 1..MAX-1) live in .bss — do NOT malloc stacks:

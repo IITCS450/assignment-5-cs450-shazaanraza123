@@ -43,6 +43,7 @@ static void consumer(void *arg){
 int main(void){
   thread_init();
   mutex_init(&mu);
+  printf(1, "test_pc: starting (wait for consumer lines, then done)\n");
 
   int p1 = thread_create(producer, (void*)1);
   int p2 = thread_create(producer, (void*)2);
