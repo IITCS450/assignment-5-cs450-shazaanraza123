@@ -14,4 +14,4 @@ Bounded buffer with two producers and one consumer, mutex around the shared buff
 
 ## Limits
 
-Max 16 threads, 2048-byte stacks each, stored in a static pool (xv6’s `malloc` grows the heap in big chunks and easily hits `allocuvm` limits). No preemption; threads have to call yield (or wait on the mutex) to switch.
+Max 16 threads, 1024-byte stacks for children, kept in a static `stack_pool` (no heap `malloc` for stacks — xv6’s allocator triggers `allocuvm` OOM otherwise). No preemption; threads have to call yield (or wait on the mutex) to switch.
